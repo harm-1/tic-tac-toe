@@ -6,8 +6,8 @@ DC := "docker compose -p "+PROJECT_NAME
 # Name os the DC service
 fe := 'server'
 
-build service='':
-	{{DC}} up --build -d {{service}}
+build *flags:
+	{{DC}} build {{flags}}
 
 up service='':
     {{DC}} up -d {{service}}
@@ -18,8 +18,11 @@ up-attach service:
 down service='':
     {{DC}} down {{service}}
 
-sh service:
+exec-sh service:
     {{DC}} exec -it {{service}} sh
+
+run-sh service:
+    {{DC}} run -it {{service}} sh
 
 ############ frontend
 webpack-watch:
