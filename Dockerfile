@@ -8,13 +8,12 @@
 
 ARG NODE_VERSION=23.0.0
 
-FROM node:${NODE_VERSION}-alpine
+FROM node:${NODE_VERSION}-alpine AS builder
 
 # Use production node environment by default.
 ENV NODE_ENV production
 
-
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.npm to speed up subsequent builds.
@@ -24,15 +23,25 @@ COPY package.json ./
 RUN npm install
 RUN mkdir -p node_modules/.cache && chmod -R 777 node_modules/.cache
 
+# With the volume instruction, the folder /app/node_modules becomes a volume on the host system.
+# That allow us to mount it again in compose
+# We need to do that because otherwise mounting the app folder unables us to use the node_modules
+# folder, because it is installed on the same folder in the container
+VOLUME node_modules
+
 # Run the application as a non-root user.
 USER node
 
-# Copy the rest of the source files into the image.
-COPY . .
+
+FROM node:16-alpine
+ENV NODE_ENV=production
+WORKDIR /app
+
+# Copy all files (including server)
+COPY --from=builder /app/node_modules ./node_modules
 
 # Expose the port that the application listens on.
 EXPOSE 3000
 
 # Run the application.
-# CMD node src/index.js
 CMD npm start
