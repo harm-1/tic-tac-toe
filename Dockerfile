@@ -10,6 +10,12 @@ ARG NODE_VERSION=23.0.0
 
 FROM node:${NODE_VERSION}-alpine AS builder
 
+# With the volume instruction, the folder /app/node_modules becomes a volume on the host system.
+# That allow us to mount it again in compose
+# We need to do that because otherwise mounting the app folder unables us to use the node_modules
+# folder, because it is installed on the same folder in the container
+VOLUME node_modules
+
 # Use production node environment by default.
 ENV NODE_ENV production
 
@@ -22,12 +28,6 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install
 RUN mkdir -p node_modules/.cache && chmod -R 777 node_modules/.cache
-
-# With the volume instruction, the folder /app/node_modules becomes a volume on the host system.
-# That allow us to mount it again in compose
-# We need to do that because otherwise mounting the app folder unables us to use the node_modules
-# folder, because it is installed on the same folder in the container
-VOLUME node_modules
 
 # Run the application as a non-root user.
 USER node
